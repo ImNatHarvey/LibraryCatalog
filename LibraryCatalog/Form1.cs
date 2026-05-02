@@ -3,13 +3,12 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using LibraryCatalog.Models; // 15. Import your namespace
+using LibraryCatalog.Models;
 
 namespace LibraryCatalog
 {
     public partial class Form1 : Form
     {
-        // Form styling and dragging components
         [DllImport("Gdi32.dll", EntryPoint = "CreateRoundRectRgn")]
         private static extern IntPtr CreateRoundRectRgn(int nLeftRect, int nTopRect, int nRightRect, int nBottomRect, int nWidthEllipse, int nHeightEllipse);
 
@@ -17,7 +16,6 @@ namespace LibraryCatalog
         private Point dragCursorPoint;
         private Point dragFormPoint;
 
-        // 16. Declare a book list
         private List<Book> catalog;
 
         public Form1()
@@ -28,9 +26,8 @@ namespace LibraryCatalog
             this.FormBorderStyle = FormBorderStyle.None;
             this.Region = System.Drawing.Region.FromHrgn(CreateRoundRectRgn(0, 0, Width, Height, 20, 20));
 
-            // Initialize catalog and add default placeholder book
             catalog = new List<Book>();
-            catalog.Add(new Book()); // Uses default constructor
+            catalog.Add(new Book());
 
             RefreshCatalog();
         }
@@ -49,7 +46,6 @@ namespace LibraryCatalog
             }
         }
 
-        // 17. Code the Add Book button
         private void btnAdd_Click(object sender, EventArgs e)
         {
             string isbn = txtISBN.Text.Trim();
@@ -58,10 +54,9 @@ namespace LibraryCatalog
             string yearText = txtYear.Text.Trim();
             string copiesText = txtCopies.Text.Trim();
 
-            // 21. Handle empty required fields
             if (string.IsNullOrEmpty(isbn) || string.IsNullOrEmpty(title) || string.IsNullOrEmpty(author))
             {
-                MessageBox.Show("ISBN, Title, and Author are required fields.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                CustomDialog.ShowMessage("ISBN, Title, and Author are required fields.", "Validation Error");
                 return;
             }
 
@@ -69,28 +64,24 @@ namespace LibraryCatalog
 
             if (string.IsNullOrEmpty(yearText) && string.IsNullOrEmpty(copiesText))
             {
-                // Use Partial Constructor
                 newBook = new Book(isbn, title, author);
             }
             else
             {
-                // 22. Handle invalid year and copies input
                 if (!int.TryParse(yearText, out int year) || !int.TryParse(copiesText, out int copies))
                 {
-                    MessageBox.Show("Year and Copies must be valid numbers.", "Parse Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    CustomDialog.ShowMessage("Year and Copies must be valid numbers.", "Parse Error");
                     return;
                 }
 
-                // Use Full Constructor
                 newBook = new Book(isbn, title, author, year, copies);
             }
 
             catalog.Add(newBook);
             RefreshCatalog();
-            btnClear_Click(null, null); // Optional: clear fields after adding
+            btnClear_Click(null, null);
         }
 
-        // 18. Code the ListBox selection event
         private void lstBooks_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (lstBooks.SelectedIndex >= 0 && lstBooks.SelectedIndex < catalog.Count)
@@ -100,7 +91,6 @@ namespace LibraryCatalog
             }
         }
 
-        // 19. Code the Borrow button
         private void btnBorrow_Click(object sender, EventArgs e)
         {
             if (lstBooks.SelectedIndex >= 0)
@@ -109,26 +99,40 @@ namespace LibraryCatalog
                 if (selectedBook.BorrowCopy())
                 {
                     txtDetails.Text = selectedBook.GetDetails();
+                    CustomDialog.ShowMessage($"Success! You have borrowed a copy of:\n\n'{selectedBook.Title}'", "Borrow Successful");
                 }
                 else
                 {
-                    MessageBox.Show("No copies available to borrow.", "Borrow Failed", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    CustomDialog.ShowMessage($"Sorry, there are no copies of '{selectedBook.Title}' currently available to borrow.", "Borrow Failed");
                 }
+            }
+            else
+            {
+                CustomDialog.ShowMessage("Please select a book from the catalog first.", "Selection Required");
             }
         }
 
-        // 19. Code the Return button
         private void btnReturn_Click(object sender, EventArgs e)
         {
             if (lstBooks.SelectedIndex >= 0)
             {
                 Book selectedBook = catalog[lstBooks.SelectedIndex];
-                selectedBook.ReturnCopy();
-                txtDetails.Text = selectedBook.GetDetails();
+                if (selectedBook.ReturnCopy())
+                {
+                    txtDetails.Text = selectedBook.GetDetails();
+                    CustomDialog.ShowMessage($"Success! You have returned your copy of:\n\n'{selectedBook.Title}'", "Return Successful");
+                }
+                else
+                {
+                    CustomDialog.ShowMessage($"Invalid Return: All borrowed copies of '{selectedBook.Title}' have already been returned.", "Return Failed");
+                }
+            }
+            else
+            {
+                CustomDialog.ShowMessage("Please select a book from the catalog first.", "Selection Required");
             }
         }
 
-        // 20. Code Remove Book
         private void btnRemove_Click(object sender, EventArgs e)
         {
             if (lstBooks.SelectedIndex >= 0)
@@ -138,7 +142,6 @@ namespace LibraryCatalog
             }
         }
 
-        // 20. Code Clear Fields
         private void btnClear_Click(object sender, EventArgs e)
         {
             txtISBN.Clear();
@@ -149,7 +152,7 @@ namespace LibraryCatalog
             txtISBN.Focus();
         }
 
-        // --- Custom Window Logic (Dragging & Closing) ---
+        // Dragging Logic
         private void panelTopBar_MouseDown(object sender, MouseEventArgs e)
         {
             dragging = true;

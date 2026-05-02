@@ -4,14 +4,13 @@ namespace LibraryCatalog.Models
 {
     public class Book
     {
-        // 4. Declare private instance variables
         private string _isbn;
         private string _title;
         private string _author;
         private int _year;
         private int _copies;
+        private int _borrowedCopies;
 
-        // 5. Create public properties for each field
         public string ISBN
         {
             get { return _isbn; }
@@ -35,7 +34,6 @@ namespace LibraryCatalog.Models
             get { return _year; }
             set
             {
-                // Reject values below 1450 or above current year
                 if (value < 1450 || value > DateTime.Now.Year)
                     _year = 1450;
                 else
@@ -48,7 +46,6 @@ namespace LibraryCatalog.Models
             get { return _copies; }
             set
             {
-                // Reject values below 0
                 if (value < 0)
                     _copies = 0;
                 else
@@ -56,7 +53,6 @@ namespace LibraryCatalog.Models
             }
         }
 
-        // 6. Default constructor
         public Book()
         {
             ISBN = "000-0000000000";
@@ -64,52 +60,59 @@ namespace LibraryCatalog.Models
             Author = "Unknown";
             Year = 1450;
             Copies = 0;
+            _borrowedCopies = 0; 
         }
 
-        // 7. Partial overloaded constructor (leaves Year and Copies at defaults)
         public Book(string isbn, string title, string author)
         {
             ISBN = isbn;
             Title = title;
             Author = author;
-            Year = 1450; // Default
-            Copies = 0;  // Default
+            Year = 1450;
+            Copies = 0;
+            _borrowedCopies = 0; 
         }
 
-        // 8. Full overloaded constructor (assigns via properties to run validation)
         public Book(string isbn, string title, string author, int year, int copies)
         {
             ISBN = isbn;
             Title = title;
             Author = author;
-            Year = year;     // Will route through validation
-            Copies = copies; // Will route through validation
+            Year = year;
+            Copies = copies;
+            _borrowedCopies = 0; 
         }
 
-        // 9. GetDetails() method
         public string GetDetails()
         {
             return $"Title: {Title}\r\n" +
                    $"Author: {Author}\r\n" +
                    $"ISBN: {ISBN}\r\n" +
                    $"Year Published: {Year}\r\n" +
-                   $"Copies Available: {Copies}";
+                   $"Copies Available: {Copies}\r\n" +
+                   $"Copies Borrowed Out: {_borrowedCopies}";
         }
 
-        // 10. BorrowCopy() and ReturnCopy() methods
         public bool BorrowCopy()
         {
             if (Copies > 0)
             {
                 Copies--;
+                _borrowedCopies++; 
                 return true;
             }
             return false;
         }
 
-        public void ReturnCopy()
+        public bool ReturnCopy()
         {
-            Copies++;
+            if (_borrowedCopies > 0)
+            {
+                Copies++;
+                _borrowedCopies--; 
+                return true;
+            }
+            return false;
         }
     }
 }
